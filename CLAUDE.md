@@ -1,4 +1,4 @@
-# Project: Legal RAG Bot & Form Generator (24-Hour Hackathon MVP)
+# Project: Legal RAG Bot & Form Generator 
 
 ## 1. THE "WHY" ENCODING (INTENT & VALUES)
 
@@ -78,29 +78,93 @@ State Check: If modifying React state, verify it does not cause an infinite rend
 
 ## 6. TECH STACK & COMMANDS
 
-Frontend: React, TypeScript, HTML/CSS (Vite) -> cd frontend && npm run dev
+Frontend: React, TypeScript, HTML/CSS (Vite) -> cd app && npm run dev
 
-Backend: FastAPI (Python 3.11+) -> cd backend && uvicorn main:app --reload
+Backend: FastAPI (Python 3.11+) -> cd server && uvicorn main:app --reload
 
-AI/DB Stack: OpenAI API (gpt-4o-mini), LangChain, ChromaDB
+AI/DB Stack: Nvidia Nim API (OpenAI-compatible), LangChain, LangGraph, ChromaDB
 
 PDF Gen: reportlab or pdfkit
 
-Linting: Pylint -> cd backend && pylint main.py llm_service.py rag_engine.py
+Linting: Pylint -> cd server && pylint main.py llm_service.py rag_engine.py
 
 ## 7. DIRECTORY STRUCTURE
 
 /
-├── frontend/                   # React/TypeScript application
-│   ├── package.json
-│   └── src/App.tsx             # Main chat interface and layout
-├── backend/                    # Python API and AI logic
-│   ├── main.py                 # FastAPI entry point & API routes
-│   ├── requirements.txt        
-│   ├── .pylintrc               
-│   ├── llm_service.py          # OpenAI API calls and JSON extraction
-│   ├── rag_engine.py           # LangChain setup and ChromaDB retrieval
-│   └── ingest.py               # Script to chunk and embed raw PDFs
-├── templates/                  # Hardcoded templates with {{VARIABLES}}
-├── data/                       # Raw legal PDFs for the RAG knowledge base
+├── app/                        # React Frontend (Vite)
+│   ├── src/
+│   │   ├── api.ts              # Fetch wrappers for FastAPI endpoints
+│   │   ├── components/         # ChatUI, HistorySidebar, ScenarioInput
+│   │   └── App.tsx             # Main Layout
+├── server/                     # FastAPI Backend
+│   ├── main.py                 # FastAPI application & REST endpoints
+│   ├── rag_engine.py           # ChromaDB retriever & vector search logic
+│   ├── llm_service.py          # OpenAI-compatible API wrappers
+│   └── agent/
+│       ├── state.py            # LangGraph TypedDict definitions (State schema)
+│       ├── llm.py              # Embedding & Chat Model initialization
+│       ├── history.py          # Chat history session manager & summarization logic
+│       ├── graph.py            # LangGraph orchestration (compiling the nodes)
+│       └── node/               # Individual LangGraph nodes
+│           ├── classifier.py   # Intent & Scenario routing
+│           ├── retriever.py    # Fetches from vector DB
+│           ├── grader.py       # Evaluates document relevance
+│           ├── rewriter.py     # Rewrites query if docs are irrelevant
+│           ├── researcher.py   # Conditional Case Law fetcher
+│           └── generator.py    # Final legal synthesis & formatting
+├── data/                       # Raw PDFs & Vector Store storage
 └── vector_store/               # Locally persisted ChromaDB files
+
+## 8. IMPLEMENTATION PLAN: ADVANCED RAG & AGENTS
+
+### User / Logic Architecture
+This flow defines how a user's request is orchestrated via LangGraph:
+
+```mermaid
+graph TD
+    A[User Query + Chat History] --> B[Intent & Scenario Classifier]
+    
+    B -->|Story/Scenario detected| C[Scenario Issue Extractor]
+    C --> D
+    B -->|Direct Query| D[ChromaDB Retriever]
+    
+    D --> E[Document Grader Node]
+    E -->|Docs Relevant| F[Conditional Router]
+    E -->|Docs Irrelevant| G[Query Rewriter Node]
+    G --> D
+    
+    F -->|Case Law explicitly requested| H[Case Law Research Agent]
+    F -->|Standard Legal Query| I[Generator Node]
+    
+    H --> I
+    I --> J[Final Output & History Update]
+```
+
+### Component Details
+1. **Chat History Strategy (`server/agent/history.py`)**
+   - **Session Management:** `session_id` allows switching histories.
+   - **Sliding Context Window:** Maintain last 3-4 raw conversational turns.
+   - **Dynamic Summarization:** Background LLM summarizes older messages into `memory_summary` to preserve context without exceeding token limits.
+
+2. **State Definition (`server/agent/state.py`)**
+   - Includes `session_id`, `chat_history`, `memory_summary`, `query`, `is_scenario`, `requires_case_law`, `documents`, `case_laws`.
+
+3. **Scenario-Based Legal Advice**
+   - **Scenario Analyzer (Pre-Retrieval):** Extracts core legal concepts (e.g., "coercion") from a hypothetical story before querying ChromaDB.
+   - **Scenario Synthesizer (Post-Retrieval):** Maps retrieved legal principles to the specific hypothetical facts.
+
+4. **Self-Corrective RAG (`server/agent/node/`)**
+   - **Document Grader:** LLM evaluates if retrieved docs address the query.
+   - **Query Rewriter:** Rewrites query for better vector matching if docs are irrelevant.
+   - **Generator:** Strict adherence to context. Outputs fallback if insufficient info.
+
+5. **Conditional Case Law Research Agent (`server/agent/node/researcher.py`)**
+   - Triggered conditionally via `Intent Classifier` if case law is explicitly requested.
+   - Pulls historical context and presents case name, ruling, alongside statutory response.
+
+### API Communication (REST)
+- **`POST /api/chat`**
+  - Req: `{ "session_id": "123", "message": "My query" }`
+  - Res: `{ "reply": "...", "case_laws": [...], "status": "success" }`
+- **`GET /api/history/{session_id}`**
+- **`GET /api/sessions`**
