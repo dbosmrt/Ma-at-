@@ -45,22 +45,22 @@ Ma'at is built on a highly modular Multi-Agent workflow. When a user submits a q
 
 ```mermaid
 graph TD
-    A[User Query + Chat History] --> B[Intent & Scenario Classifier]
+    A["User Query + Chat History"] --> B["Intent & Scenario Classifier"]
     
-    B -->|Story/Scenario detected| C[Scenario Issue Extractor]
+    B -->|"Story/Scenario detected"| C["Scenario Issue Extractor"]
     C --> D
-    B -->|Direct Query| D[ChromaDB Retriever]
+    B -->|"Direct Query"| D["ChromaDB Retriever"]
     
-    D --> E[Document Grader Node]
-    E -->|Docs Relevant| F[Conditional Router]
-    E -->|Docs Irrelevant| G[Query Rewriter Node]
+    D --> E["Document Grader Node"]
+    E -->|"Docs Relevant"| F["Conditional Router"]
+    E -->|"Docs Irrelevant"| G["Query Rewriter Node"]
     G --> D
     
-    F -->|Case Law explicitly requested| H[Case Law Research Agent]
-    F -->|Standard Legal Query| I[Generator Node]
+    F -->|"Case Law explicitly requested"| H["Case Law Research Agent"]
+    F -->|"Standard Legal Query"| I["Generator Node"]
     
     H --> I
-    I --> J[Final Output & History Update]
+    I --> J["Final Output & History Update"]
 ```
 
 ---
