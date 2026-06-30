@@ -1,0 +1,9 @@
+node_modules/
+__pycache__/
+*.pyc
+.git/
+.env
+app/dist/
+.pytest_cache/
+vector_store/
+data/
