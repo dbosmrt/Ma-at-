@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List, Dict, Any
+from typing import List
 
 class ChatRequest(BaseModel):
     query: str = Field(..., max_length=2000, description="The user's legal question or scenario.")

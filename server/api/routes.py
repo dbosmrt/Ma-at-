@@ -3,9 +3,9 @@ import json
 import uuid
 from typing import List
 from fastapi import APIRouter, HTTPException, Depends
-from langchain_core.messages import HumanMessage, AIMessage, BaseMessage
+from langchain_core.messages import HumanMessage, AIMessage
 
-from api.models import ChatRequest, ChatResponse, StartSessionResponse, ChatHistoryResponse, MessageHistory, SessionItem, SessionListResponse
+from api.models import ChatRequest, ChatResponse, StartSessionResponse, ChatHistoryResponse, SessionItem, SessionListResponse
 from api.security import get_api_key
 from agent.chat_graph import build_chat_graph
 from agent.state import AgentState

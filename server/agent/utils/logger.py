@@ -1,6 +1,5 @@
 import os
 import json
-import traceback
 from datetime import datetime
 
 # Calculate project root dynamically based on this file's location

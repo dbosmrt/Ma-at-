@@ -20,7 +20,7 @@ RUN apt-get update && apt-get install -y \
 
 # Install python dependencies
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install -r requirements.txt
 
 # Copy backend source code
 COPY server/ ./server/

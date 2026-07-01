@@ -1,5 +1,5 @@
 import logging
-from ddgs import DDGS
+from duckduckgo_search import DDGS
 from langchain_core.output_parsers import JsonOutputParser
 from agent.state import AgentState, SearchQueries
 from agent.model import ChatModels
